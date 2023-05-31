@@ -10,7 +10,9 @@ import {
 import { UserService } from '../service/user.service';
 import { Observable } from 'rxjs';
 import { User } from '../models/user.interface';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('users')
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
