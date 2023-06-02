@@ -6,11 +6,15 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { Observable, catchError, map, of } from 'rxjs';
-import { User } from '../models/user.interface';
-import { ApiTags } from '@nestjs/swagger';
+import { User, UserRole } from '../models/user.interface';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtGuard } from 'src/auth/guards/jwt.guard';
+import { hasRoles } from 'src/auth/decorator/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -40,6 +44,9 @@ export class UserController {
   }
 
   @Get()
+  @UseGuards(JwtGuard, RolesGuard)
+  @hasRoles(UserRole.ADMIN)
+  @ApiBearerAuth('JWT-auth')
   findAll(): Observable<User[]> {
     return this.userService.findAll();
   }

@@ -14,4 +14,13 @@ export class User {
 
   @ApiProperty()
   password?: string;
+
+  role?: UserRole;
+}
+
+export enum UserRole {
+  ADMIN = 'admin',
+  EDITOR = 'editor',
+  CHIEFEDITOR = 'chiefeditor',
+  USER = 'user',
 }
