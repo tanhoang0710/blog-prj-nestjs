@@ -60,4 +60,14 @@ export class UserController {
   updateOne(@Param('id') id: number, @Body() user: User): Observable<any> {
     return this.userService.updateOne(id, user);
   }
+
+  @Put(':id/role')
+  @UseGuards(JwtGuard, RolesGuard)
+  @hasRoles(UserRole.ADMIN)
+  updateRoleOfUser(
+    @Param('id') id: string,
+    @Body() user: User,
+  ): Observable<User> {
+    return this.userService.updateRoleOfUser(Number(id), user);
+  }
 }
