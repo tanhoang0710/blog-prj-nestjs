@@ -59,16 +59,35 @@ export class UserController {
     name: 'limit',
     required: false,
   })
+  @ApiQuery({
+    name: 'username',
+    required: false,
+  })
   index(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+    @Query('username') username: string,
   ): Observable<Pagination<User>> {
+    console.log(
+      '🚀 ~ file: user.controller.ts:71 ~ UserController ~ username:',
+      username,
+    );
     limit = limit > 100 ? 100 : limit;
-    return this.userService.paginate({
-      page,
-      limit,
-      route: 'http://localhost:3000/api/users',
-    });
+
+    if (username === null || username === undefined)
+      return this.userService.paginate({
+        page,
+        limit,
+        route: 'http://localhost:3000/api/users',
+      });
+    return this.userService.paginateFilterByUserName(
+      {
+        page,
+        limit,
+        route: 'http://localhost:3000/api/users',
+      },
+      { username },
+    );
   }
 
   @Delete(':id')
