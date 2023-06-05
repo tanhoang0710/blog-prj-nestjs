@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
   Body,
   Controller,
@@ -9,16 +10,44 @@ import {
   Post,
   Put,
   Query,
+  Req,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from '../service/user.service';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 import { User, UserRole } from '../models/user.interface';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtGuard } from 'src/auth/guards/jwt.guard';
 import { hasRoles } from 'src/auth/decorator/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Pagination } from 'nestjs-typeorm-paginate';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { Request, Response } from 'express';
+import * as path from 'path';
+
+export const storage = {
+  storage: diskStorage({
+    destination: './uploads/profileImages',
+    filename: (req: Request, file: any, cb: any) => {
+      const fileName: string =
+        path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
+      const extension: string = path.parse(file.originalname).ext;
+
+      cb(null, `${fileName}${extension}`);
+    },
+  }),
+};
 
 @ApiTags('users')
 @Controller('users')
@@ -109,5 +138,54 @@ export class UserController {
     @Body() user: User,
   ): Observable<User> {
     return this.userService.updateRoleOfUser(Number(id), user);
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file', storage))
+  @ApiBearerAuth('JWT-auth')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  uploadFile(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ): Observable<object> {
+    const user: User = req.user?.user;
+
+    return this.userService
+      .updateOne(user.id, {
+        profileImage: file.filename,
+      })
+      .pipe(
+        tap((user: User) => console.log(user)),
+        map((user: User) => ({
+          profileImage: user.profileImage,
+        })),
+      );
+  }
+
+  @Get('profile-image/:imagename')
+  @ApiParam({
+    name: 'imagename',
+  })
+  findProfileImage(
+    @Param('imagename') imagename: any,
+    @Res() res: any,
+  ): Observable<object> {
+    return of(
+      res.sendFile(
+        path.join(process.cwd(), 'uploads/profileImages/' + imagename),
+      ),
+    );
   }
 }

@@ -16,6 +16,8 @@ export class User {
   password?: string;
 
   role?: UserRole;
+
+  profileImage?: string;
 }
 
 export enum UserRole {
