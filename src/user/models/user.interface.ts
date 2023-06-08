@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BlogEntry } from 'src/blog/model/blog-entry.interface';
 
 export class User {
   id?: number;
@@ -18,6 +19,7 @@ export class User {
   role?: UserRole;
 
   profileImage?: string;
+  blogEntries?: BlogEntry[];
 }
 
 export enum UserRole {

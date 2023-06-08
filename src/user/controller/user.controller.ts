@@ -33,7 +33,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import * as path from 'path';
 import { UserIsUserGuard } from 'src/auth/guards/userIsUser.guard';
 
