@@ -35,6 +35,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { Request, Response } from 'express';
 import * as path from 'path';
+import { UserIsUserGuard } from 'src/auth/guards/userIsUser.guard';
 
 export const storage = {
   storage: diskStorage({
@@ -125,6 +126,8 @@ export class UserController {
   }
 
   @Put(':id')
+  @UseGuards(JwtGuard, UserIsUserGuard)
+  @ApiBearerAuth('JWT-auth')
   updateOne(@Param('id') id: number, @Body() user: User): Observable<any> {
     return this.userService.updateOne(id, user);
   }
