@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -13,6 +15,7 @@ import { Observable } from 'rxjs';
 import { BlogEntry } from './model/blog-entry.interface';
 import { JwtGuard } from 'src/auth/guards/jwt.guard';
 import { ApiBearerAuth, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { UserIsAuthorGuard } from './guards/userIsAuthor.guard';
 
 @Controller('blogs')
 @ApiTags('blogs')
@@ -42,9 +45,34 @@ export class BlogController {
   @Get(':id')
   @ApiParam({
     name: 'id',
-    required: false,
+    required: true,
   })
   findOne(@Param('id') id: number): Observable<BlogEntry> {
     return this.blogService.findOne(id);
+  }
+
+  @UseGuards(JwtGuard, UserIsAuthorGuard)
+  @Put(':id')
+  @ApiParam({
+    name: 'id',
+    required: true,
+  })
+  @ApiBearerAuth('JWT-auth')
+  updateOne(
+    @Param('id') id: number,
+    @Body() blogEntry: BlogEntry,
+  ): Observable<BlogEntry> {
+    return this.blogService.updateOne(Number(id), blogEntry);
+  }
+
+  @UseGuards(JwtGuard, UserIsAuthorGuard)
+  @Delete(':id')
+  @ApiParam({
+    name: 'id',
+    required: true,
+  })
+  @ApiBearerAuth('JWT-auth')
+  deleteOne(@Param('id') id: number): Observable<any> {
+    return this.blogService.deleteOne(Number(id));
   }
 }
