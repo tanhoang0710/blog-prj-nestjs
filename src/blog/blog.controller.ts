@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -40,6 +41,56 @@ export class BlogController {
       return this.blogService.findAll();
     }
     return this.blogService.findByUser(userId);
+  }
+
+  @Get('/pageable')
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
+  index(
+    @Query('page', ParseIntPipe) page = 1,
+    @Query('limit', ParseIntPipe) limit = 10,
+  ) {
+    limit = limit > 100 ? 100 : limit;
+    return this.blogService.paginateAll({
+      limit,
+      page,
+      route: 'http://localhost:3000/api/blogs',
+    });
+  }
+
+  @Get('/pageable/user/:userId')
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+  })
+  @ApiParam({
+    name: 'userId',
+    required: false,
+  })
+  indexByUser(
+    @Query('page', ParseIntPipe) page = 1,
+    @Query('limit', ParseIntPipe) limit = 10,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    limit = limit > 100 ? 100 : limit;
+    return this.blogService.paginateByUser(
+      {
+        limit,
+        page,
+        route: 'http://localhost:3000/api/blogs',
+      },
+      userId,
+    );
   }
 
   @Get(':id')
