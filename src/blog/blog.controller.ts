@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
   Body,
   Controller,
@@ -9,14 +10,41 @@ import {
   Put,
   Query,
   Req,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { BlogService } from './blog.service';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { BlogEntry } from './model/blog-entry.interface';
 import { JwtGuard } from 'src/auth/guards/jwt.guard';
-import { ApiBearerAuth, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UserIsAuthorGuard } from './guards/userIsAuthor.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import path from 'path';
+import { Image } from './model/image.interface';
+
+export const storage = {
+  storage: diskStorage({
+    destination: './uploads/blogEntryImages',
+    filename: (req, file: any, cb: any) => {
+      const fileName: string =
+        path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
+      const extension: string = path.parse(file.originalname).ext;
+
+      cb(null, `${fileName}${extension}`);
+    },
+  }),
+};
 
 @Controller('blogs')
 @ApiTags('blogs')
@@ -125,5 +153,43 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   deleteOne(@Param('id') id: number): Observable<any> {
     return this.blogService.deleteOne(Number(id));
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file', storage))
+  @ApiBearerAuth('JWT-auth')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  uploadFile(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ): Observable<Image> {
+    return of(file);
+  }
+
+  @Get('image/:imagename')
+  @ApiParam({
+    name: 'imagename',
+  })
+  findProfileImage(
+    @Param('imagename') imagename: any,
+    @Res() res: any,
+  ): Observable<Image> {
+    return of(
+      res.sendFile(
+        path.join(process.cwd(), 'uploads/blogEntryImages/' + imagename),
+      ),
+    );
   }
 }
